@@ -58,4 +58,52 @@ public struct StereoProcessor {
     }
 
     public mutating func reset() {}
+
+    func testAutomationMovesSoundAcrossStereoChannels() {
+        var program = PanningProgram()
+        program.setPoints([
+            .init(position: 0.0, pan: -1.0),
+            .init(position: 0.5, pan: 1.0),
+            .init(position: 1.0, pan: -1.0)
+        ])
+
+        let processor = StereoProcessor()
+        var left: [Float] = [1, 1, 1, 1]
+        var right: [Float] = [1, 1, 1, 1]
+
+        processor.process(
+            left: &left,
+            right: &right,
+            program: program,
+            startPosition: 0.0,
+            positionIncrement: 0.25
+        )
+
+        XCTAssertEqual(left, [1, 1, 0, 1])
+        XCTAssertEqual(right, [0, 1, 1, 1])
+    }
+
+    func testAutomationAppliesGain() {
+        var program = PanningProgram()
+        program.setPoints([
+            .init(position: 0.0, pan: 0.0),
+            .init(position: 1.0, pan: 0.0)
+        ])
+
+        let processor = StereoProcessor()
+        var left: [Float] = [1, 0.5]
+        var right: [Float] = [0.5, 1]
+
+        processor.process(
+            left: &left,
+            right: &right,
+            program: program,
+            startPosition: 0.0,
+            positionIncrement: 0.5,
+            gain: 0.5
+        )
+
+        XCTAssertEqual(left, [0.5, 0.25])
+        XCTAssertEqual(right, [0.25, 0.5])
+    }
 }
